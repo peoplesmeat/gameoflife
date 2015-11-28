@@ -1,0 +1,95 @@
+<!doctype html>
+<head>
+    <title>Game of Life</title>
+
+    <script src="/static/scripts/lib/jquery-2.1.4.js"></script>
+
+    <script type="text/javascript">
+
+
+        var m = 40;
+        var n = 40;
+        //var liveCells = [[1,3], [2,3], [3,3], [3,2], [2,1]];
+
+        var liveCells = [];
+        for (var i=0; i<m; i++) {
+            for (var j=0; j<n; j++) {
+                if (Math.random() < 0.6) {
+                    liveCells.push([i,j]);
+                }
+            }
+        }
+
+        function isCellActive(x, y, liveCells) {
+            for (var i=0; i<liveCells.length; i++) {
+                if (liveCells[i][0] == x && liveCells[i][1] == y) {
+                    return true;
+                }
+            }
+        }
+
+        function drawGeneration(m, n, liveCells) {
+            console.log($.map(liveCells, function(x) { return '(' + x[0] + "," + x[1] + ')';}));
+            var canvas = document.getElementById('canvas');
+            var width  = $(canvas).width();
+            var height = $(canvas).height();
+
+            var blockWidth = width/m/2;
+            var blockHeight = height/n/4;
+
+
+            if (canvas.getContext) {
+                var ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                for (var i = 0; i < m; i++) {
+                    for (var j = 0; j < n; j++) {
+                        if (isCellActive(i,j, liveCells)) {
+                            ctx.fillStyle="#FF0000";
+                        } else {
+                            ctx.fillStyle="#00FF00";
+                        }
+
+                        ctx.fillRect(i*blockWidth, j*blockHeight, blockWidth-1, blockHeight-1);
+                    }
+                }
+            }
+        }
+
+        function getNextGeneration() {
+
+            drawGeneration(m, n, liveCells);
+
+            var data = {
+                'M': m,
+                'N': n,
+                'liveCells': liveCells
+            };
+
+            $.ajax({
+                url: "/advance",
+                jsonp: 'callback',
+                dataType: 'jsonp',
+                data: data,
+                success: function (response) {
+                    drawGeneration(data.M, data.N, response);
+                    liveCells = response;
+                }
+            });
+        }
+
+
+        $(document).ready(function () {
+            drawGeneration(m, n, liveCells);
+
+        });
+    </script>
+
+</head>
+<body>
+<div class=page>
+    <button onclick="javascript:getNextGeneration();">Get Next Generation</button>
+    <div>
+        <canvas id="canvas" style="width:700px; height:600px;"></canvas>
+    </div>
+</div>
+</body>
